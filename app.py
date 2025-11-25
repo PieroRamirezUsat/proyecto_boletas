@@ -1,5 +1,6 @@
 from werkzeug.security import check_password_hash, generate_password_hash
-from config import get_db_params, Config
+from config import Config
+
 
 from validacion import (
     validar_dni,
@@ -53,8 +54,15 @@ def allowed_file(filename: str) -> bool:
 # =========================================================
 
 def get_db():
-    params = get_db_params()
-    return psycopg2.connect(**params)
+    """
+    Crea y devuelve una conexión a Postgres usando la URL completa
+    que da Render en DATABASE_URL.
+    """
+    if not Config.DATABASE_URL:
+        raise RuntimeError("DATABASE_URL no está configurada en el entorno")
+
+    # Render exige SSL, por eso sslmode='require'
+    return psycopg2.connect(Config.DATABASE_URL, sslmode="require")
 
 
 # =========================================================
