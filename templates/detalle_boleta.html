@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Detalle de Boleta de Pago</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#127ae2",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            "display": ["Public Sans", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="font-display bg-background-light">
+<div class="relative flex min-h-screen w-full flex-col items-center justify-center p-4 sm:p-6">
+  <div class="w-full max-w-2xl">
+    <div class="relative flex w-full flex-col overflow-hidden rounded-xl border border-slate-200/50 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-slate-200 p-4 sm:p-6">
+        <h2 class="text-lg font-bold text-slate-800 sm:text-xl">
+          Boleta de pago – {{ mes_texto }} {{ boleta.anio }}
+        </h2>
+
+        {# Botón cerrar: redirige según el rol en sesión #}
+        <a
+          href="
+          {% if session.get('rol') == 'ADMIN' %}
+            {{ url_for('admin_boletas') }}
+          {% elif session.get('rol') == 'DIGITADOR' %}
+            {{ url_for('digitador_panel') }}
+          {% else %}
+            {{ url_for('usuario_panel') }}
+          {% endif %}
+          "
+          class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
+        >
+          <span class="material-symbols-outlined text-xl">close</span>
+        </a>
+      </div>
+
+      <!-- Contenido -->
+      <div class="flex flex-col gap-6 p-4 sm:p-6">
+
+        <!-- Datos principales -->
+        <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+          <div>
+            <p class="text-sm font-medium text-slate-500">DNI</p>
+            <p class="text-base font-semibold text-slate-700">{{ boleta.dni_titular }}</p>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-slate-500">Régimen / Cargo</p>
+            <p class="text-base font-semibold text-slate-700">
+              {{ boleta.tipo_trabajador if boleta.tipo_trabajador else 'NO_REGISTRADO' }}
+            </p>
+          </div>
+          <div class="sm:col-span-2">
+            <p class="text-sm font-medium text-slate-500">Nombres y Apellidos</p>
+            <p class="text-base font-semibold text-slate-700">
+              {{ boleta.nombres_titular }} {{ boleta.apellidos_titular }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Referencia física -->
+        <div class="border-t border-slate-200/80 pt-4">
+          <p class="text-sm font-medium text-slate-500">
+            Referencia de Libro / Legajo / Caja / Fólder físico
+          </p>
+          <p class="text-base font-semibold text-slate-700">
+            Origen físico:
+            Caja {{ boleta.caja_fisica or '—' }} –
+            Legajo {{ boleta.legajo_fisico or '—' }} –
+            Carpeta {{ boleta.carpeta_fisica or '—' }}.
+          </p>
+        </div>
+
+        <!-- Caja PDF + botones -->
+        <div class="relative w-full @container">
+          <div class="relative flex flex-col items-stretch justify-start rounded-lg border border-slate-200 bg-slate-50">
+            <div class="flex aspect-[4/3] w-full items-center justify-center rounded-t-lg bg-slate-200/50">
+              <span class="material-symbols-outlined text-6xl text-slate-400">picture_as_pdf</span>
+            </div>
+            <div class="flex w-full flex-col items-stretch justify-center gap-4 p-4 @sm:flex-row @sm:items-center">
+              <div class="flex flex-col gap-4 flex-1">
+
+                <!-- Descargar PDF -->
+                <a href="{{ url_for('descargar_boleta', id_boleta=boleta.id_boleta) }}"
+                   class="flex w-full min-w-[84px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-12 px-5 bg-primary text-white text-base font-bold tracking-[0.015em] hover:opacity-90">
+                  <span class="material-symbols-outlined">download</span>
+                  <span class="truncate">Descargar PDF</span>
+                </a>
+
+                <!-- Abrir PDF en nueva pestaña -->
+                <a href="{{ url_for('ver_pdf_boleta', id_boleta=boleta.id_boleta) }}" target="_blank"
+                   class="flex w-full min-w-[84px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-12 px-5 bg-transparent text-slate-800 ring-1 ring-inset ring-slate-300 hover:bg-slate-100 text-base font-bold tracking-[0.015em]">
+                  <span class="material-symbols-outlined">open_in_new</span>
+                  <span class="truncate">Abrir en nueva pestaña</span>
+                </a>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info adicional -->
+        <div class="border-t border-slate-200 pt-4">
+          <div class="flex flex-col gap-2 rounded-lg bg-slate-50 p-4">
+            <div class="flex items-start gap-2 text-xs text-slate-600">
+              <span class="material-symbols-outlined text-base">info</span>
+              <p class="flex-1">
+                <strong class="font-medium text-slate-700">Fecha de digitalización:</strong>
+                {{ boleta.fecha_digitalizacion.strftime('%d/%m/%Y') if boleta.fecha_digitalizacion else 'N/A' }}
+              </p>
+            </div>
+            <div class="flex items-start gap-2 text-xs text-slate-600">
+              <span class="material-symbols-outlined text-base">person</span>
+              <p class="flex-1">
+                <strong class="font-medium text-slate-700">Digitalizado por:</strong>
+                {% if boleta.dni_digitador %}
+                  {% if boleta.nombres_digitador %}
+                    {{ boleta.nombres_digitador }} {{ boleta.apellidos_digitador }}
+                    (DNI {{ boleta.dni_digitador }})
+                  {% else %}
+                    DNI {{ boleta.dni_digitador }}
+                  {% endif %}
+                {% else %}
+                  Sistema de Archivo
+                {% endif %}
+              </p>
+            </div>
+            <p class="mt-2 text-xs italic text-slate-500">
+              Nota: Esta boleta forma parte del archivo histórico y fue digitalizada a partir del documento físico.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

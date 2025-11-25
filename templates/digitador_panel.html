@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard del Digitador - UGEL Lambayeque</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+
+  <!-- Chart.js para los gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+    }
+  </style>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#127ae2",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+            "text-light": "#0d141b",
+            "text-dark": "#f6f7f8",
+            "subtext-light": "#4c739a",
+            "subtext-dark": "#94a3b8",
+            "card-light": "#ffffff",
+            "card-dark": "#1e293b",
+            "border-light": "#e2e8f0",
+            "border-dark": "#334155",
+          },
+          fontFamily: {
+            "display": ["Public Sans", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="font-display bg-background-light text-text-light">
+
+<div class="relative flex min-h-screen">
+  <!-- Sidebar del DIGITADOR -->
+  <aside class="sticky top-0 h-screen flex-shrink-0 bg-card-light border-r border-border-light hidden lg:flex lg:flex-col lg:w-64">
+    <div class="flex h-full flex-col justify-between p-4">
+      <div class="flex flex-col gap-4">
+        <div class="flex gap-3 items-center p-2">
+          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
+               style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBI_XvzNwxLD8gGshvs-MLjp2q0YNf5hj2Zx11SD7m7oewkd6Eyr8dOxvdVkmAApE4tYw_OhzwBwXdjA83jGHJ5DBg3n4tzwyPNc23puxxmES9IXCP0FQ-ZH01JszzNOYHa43oCm7hX7qzlgwEZD4KjiS-KuSIxDO3j9aGf0sd7KeNJ5OEVwbMtMkgeR0VL35ErBz7nOPoW91WkUhkiurtzxJBPiY82kTCYXzks4a8qSsdGo7whIgnTQV8Ny0avgF0nEmiycmF4iy_z");'>
+          </div>
+          <div class="flex flex-col">
+            <h1 class="text-base font-medium text-text-light">UGEL Lambayeque</h1>
+            <p class="text-sm text-subtext-light">Sistema de Digitalización</p>
+          </div>
+        </div>
+
+        <nav class="flex flex-col gap-2 mt-4">
+          <!-- Dashboard (actual) -->
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary"
+             href="{{ url_for('digitador_panel') }}">
+            <span class="material-symbols-outlined text-primary">dashboard</span>
+            <p class="text-sm font-bold">Dashboard</p>
+          </a>
+
+          <!-- Subir boletas -->
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+             href="{{ url_for('subir_boletas') }}">
+            <span class="material-symbols-outlined">upload_file</span>
+            <p class="text-sm font-medium">Subir boletas</p>
+          </a>
+        </nav>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+           href="{{ url_for('logout') }}">
+          <span class="material-symbols-outlined">logout</span>
+          <p class="text-sm font-medium">Cerrar Sesión</p>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div class="w-full max-w-7xl mx-auto">
+
+      {% set meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] %}
+
+      <!-- Header -->
+      <header class="flex flex-wrap justify-between items-center gap-4 mb-4">
+        <div class="flex flex-col gap-1">
+          <h1 class="text-3xl font-black leading-tight tracking-[-0.03em]">Dashboard del Digitador</h1>
+          {% if trabajador %}
+            <p class="text-base text-subtext-light">
+              Resumen de las boletas históricas que has digitalizado ({{ trabajador.nombres }} {{ trabajador.apellidos }}).
+            </p>
+          {% else %}
+            <p class="text-base text-subtext-light">
+              No se encontraron registros de boletas digitalizadas por tu usuario.
+            </p>
+          {% endif %}
+        </div>
+      </header>
+
+      <!-- Mensajes flash -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-4 space-y-2">
+            {% for category, message in messages %}
+              <div class="rounded-lg px-4 py-2 text-sm
+                          {% if category == 'success' %} bg-emerald-50 text-emerald-700 border border-emerald-200
+                          {% elif category == 'danger' %} bg-red-50 text-red-700 border border-red-200
+                          {% else %} bg-slate-50 text-slate-700 border border-slate-200 {% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Cards resumen -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <!-- Total de Boletas -->
+        <div class="flex flex-col gap-2 rounded-xl p-5 bg-card-light border border-border-light shadow-sm">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-subtext-light">Total de boletas</p>
+            <span class="material-symbols-outlined text-slate-500">receipt_long</span>
+          </div>
+          <p class="text-3xl font-bold leading-tight">{{ total_boletas }}</p>
+          <p class="text-xs text-subtext-light">
+            Total de boletas históricas que has digitalizado.
+          </p>
+        </div>
+
+        <!-- Boletas Verificadas -->
+        <div class="flex flex-col gap-2 rounded-xl p-5 bg-card-light border border-border-light shadow-sm">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-subtext-light">Boletas verificadas</p>
+            <span class="material-symbols-outlined text-emerald-500">verified</span>
+          </div>
+          <p class="text-3xl font-bold leading-tight">{{ boletas_verificadas }}</p>
+          <p class="text-xs text-subtext-light">
+            Boletas digitalizadas por ti que ya fueron revisadas y validadas por el área de archivo.
+          </p>
+        </div>
+
+        <!-- Boletas Pendientes -->
+        <div class="flex flex-col gap-2 rounded-xl p-5 bg-card-light border border-border-light shadow-sm">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-subtext-light">Boletas pendientes</p>
+            <span class="material-symbols-outlined text-amber-500">hourglass_empty</span>
+          </div>
+          <p class="text-3xl font-bold leading-tight">{{ boletas_pendientes }}</p>
+          <p class="text-xs text-subtext-light">
+            Boletas digitalizadas por ti que aún están en revisión o sin validación final.
+          </p>
+        </div>
+
+        <!-- Errores de carga -->
+        <div class="flex flex-col gap-2 rounded-xl p-5 bg-card-light border border-border-light shadow-sm">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-subtext-light">Errores de carga</p>
+            <span class="material-symbols-outlined text-red-500">error</span>
+          </div>
+          <p class="text-3xl font-bold leading-tight">{{ errores_carga }}</p>
+          <p class="text-xs text-subtext-light">
+            Cargas con observaciones registradas en el historial (si aplica).
+          </p>
+        </div>
+      </section>
+
+      {% if labels_anios %}
+      <!-- Gráficos -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <!-- Evolución de boletas por año -->
+        <div class="lg:col-span-2 bg-card-light rounded-xl border border-border-light shadow-sm p-6">
+          <div class="flex justify-between items-baseline mb-4">
+            <h2 class="text-base font-semibold">Evolución de boletas por año</h2>
+            <p class="text-xs text-subtext-light">
+              Boletas que has digitalizado en cada año.
+            </p>
+          </div>
+          <div class="h-72">
+            <canvas id="chartBoletasPorAnio"></canvas>
+          </div>
+        </div>
+
+        <!-- Nota -->
+        <div class="bg-card-light rounded-xl border border-border-light shadow-sm p-6">
+          <h2 class="text-base font-semibold mb-3">Cómo leer esta información</h2>
+          <p class="text-sm text-subtext-light mb-2">
+            • La barra azul muestra cuántas boletas has digitalizado en cada año.
+          </p>
+          <p class="text-sm text-subtext-light mb-2">
+            • La barra rosada indica cuántas de esas boletas ya están verificadas.
+          </p>
+          <p class="text-sm text-subtext-light">
+            • Te ayuda a ver en qué años faltan validar boletas que tú registraste.
+          </p>
+        </div>
+      </section>
+
+      <!-- % verificadas -->
+      <section class="bg-card-light rounded-xl border border-border-light shadow-sm p-6 mb-8">
+        <div class="flex justify-between items-baseline mb-4">
+          <h2 class="text-base font-semibold">% de boletas verificadas por año</h2>
+          <p class="text-xs text-subtext-light">
+            Te permite identificar años donde aún falta completar la verificación.
+          </p>
+        </div>
+        <div class="h-64">
+          <canvas id="chartPctVerificadas"></canvas>
+        </div>
+      </section>
+      {% else %}
+      <!-- Sin datos -->
+      <section class="bg-card-light rounded-xl border border-border-light shadow-sm p-6 mb-8">
+        <p class="text-sm text-subtext-light">
+          Todavía no hay boletas históricas digitalizadas por ti en el sistema.
+        </p>
+      </section>
+      {% endif %}
+
+      <!-- ========================================= -->
+      <!-- Boletas digitalizadas por este usuario   -->
+      <!-- ========================================= -->
+      <section class="mt-8 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <div class="px-6 py-4 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div>
+            <h2 class="text-base font-semibold text-slate-900">
+              Boletas que has digitalizado
+            </h2>
+            <p class="text-xs text-slate-500">
+              Listado de boletas históricas donde tu DNI figura como digitador.
+            </p>
+          </div>
+
+          <form method="get" class="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
+            <!-- Buscador -->
+            <div class="relative flex-1 min-w-[180px]">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">
+                search
+              </span>
+              <input
+                type="text"
+                name="q"
+                value="{{ q or '' }}"
+                placeholder="Buscar por DNI o Nombres..."
+                class="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+              />
+            </div>
+
+            <!-- Filtro Año -->
+            <select
+              name="anio"
+              class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm min-w-[90px] focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+              <option value="">Año</option>
+              {% for anio in range(1980, 2031) %}
+                <option value="{{ anio }}"
+                        {% if filtro_anio and filtro_anio|int == anio %}selected{% endif %}>
+                  {{ anio }}
+                </option>
+              {% endfor %}
+            </select>
+
+            <!-- Filtro Mes -->
+            <select
+              name="mes"
+              class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm min-w-[90px] focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+              <option value="">Mes</option>
+              {% for i in range(1,13) %}
+                <option value="{{ i }}"
+                        {% if filtro_mes and filtro_mes|int == i %}selected{% endif %}>
+                  {{ meses[i-1] }}
+                </option>
+              {% endfor %}
+            </select>
+
+            <!-- Filtro Estado -->
+            <select
+              name="estado"
+              class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm min-w-[110px] focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+              <option value="">Estado</option>
+              <option value="pendiente" {% if filtro_estado == "pendiente" %}selected{% endif %}>Pendiente</option>
+              <option value="verificada" {% if filtro_estado == "verificada" %}selected{% endif %}>Verificada</option>
+            </select>
+
+            <!-- Botón limpiar -->
+            <a href="{{ url_for('digitador_panel') }}"
+               class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-600 hover:bg-slate-50">
+              Limpiar filtros
+            </a>
+          </form>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm text-left">
+            <thead class="bg-slate-50 border-b border-slate-200">
+              <tr class="text-xs font-semibold text-slate-500 uppercase">
+                <th class="px-6 py-3">DNI</th>
+                <th class="px-6 py-3">Nombres</th>
+                <th class="px-6 py-3">Año</th>
+                <th class="px-6 py-3">Mes</th>
+                <th class="px-6 py-3">Estado</th>
+                <th class="px-6 py-3">Fuente</th>
+                <th class="px-6 py-3 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if boletas and boletas|length > 0 %}
+                {% for b in boletas %}
+                  <tr class="border-b border-slate-100 hover:bg-slate-50/70">
+                    <td class="px-6 py-3 font-mono text-xs text-slate-800">
+                      {{ b.dni }}
+                    </td>
+                    <td class="px-6 py-3 text-slate-900">
+                      {{ b.nombres }} {{ b.apellidos }}
+                    </td>
+                    <td class="px-6 py-3">
+                      {{ b.anio }}
+                    </td>
+                    <td class="px-6 py-3">
+                      {% if b.mes %}
+                        {{ meses[b.mes - 1] }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td class="px-6 py-3">
+                      {% if b.tiene_error %}
+                        <span class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold text-red-700 border border-red-200">
+                          Con observación
+                        </span>
+                      {% elif b.verificada %}
+                        <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
+                          Verificada
+                        </span>
+                      {% else %}
+                        <span class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 border border-amber-200">
+                          Pendiente
+                        </span>
+                      {% endif %}
+                    </td>
+                    <td class="px-6 py-3 text-slate-700">
+                      {{ b.fuente or 'Escaneada' }}
+                    </td>
+                    <td class="px-6 py-3">
+                      <div class="flex justify-end gap-2">
+                        <a
+                          href="{{ url_for('detalle_boleta', id_boleta=b.id_boleta) }}"
+                          class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white p-1.5 hover:bg-slate-100"
+                          title="Ver detalle">
+                          <span class="material-symbols-outlined text-slate-600 text-base">
+                            visibility
+                          </span>
+                        </a>
+                        <a
+                          href="{{ url_for('descargar_boleta', id_boleta=b.id_boleta) }}"
+                          class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white p-1.5 hover:bg-slate-100"
+                          title="Descargar PDF">
+                          <span class="material-symbols-outlined text-slate-600 text-base">
+                            download
+                          </span>
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="7" class="px-6 py-6 text-center text-sm text-slate-500">
+                    Aún no tienes boletas registradas como digitador
+                    {% if q %}que coincidan con la búsqueda "{{ q }}"{% endif %}.
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+{% if labels_anios %}
+<script type="text/javascript">
+  const labelsAnios = JSON.parse(`{{ labels_anios | tojson | safe }}`);
+  const dataTotalPorAnio = JSON.parse(`{{ data_total_por_anio | tojson | safe }}`);
+  const dataVerificadasPorAnio = JSON.parse(`{{ data_verificadas_por_anio | tojson | safe }}`);
+  const dataPctVerificadasPorAnio = JSON.parse(`{{ data_pct_verificadas_por_anio | tojson | safe }}`);
+
+  const ctxBoletas = document.getElementById('chartBoletasPorAnio');
+  if (ctxBoletas && labelsAnios.length > 0) {
+    new Chart(ctxBoletas, {
+      type: 'bar',
+      data: {
+        labels: labelsAnios,
+        datasets: [
+          {
+            label: 'Boletas digitalizadas',
+            data: dataTotalPorAnio,
+            backgroundColor: 'rgba(80, 149, 255, 0.8)'
+          },
+          {
+            label: 'Boletas verificadas',
+            data: dataVerificadasPorAnio,
+            backgroundColor: 'rgba(255, 140, 180, 0.8)'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          x: { stacked: false },
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1 }
+          }
+        }
+      }
+    });
+  }
+
+  const ctxPct = document.getElementById('chartPctVerificadas');
+  if (ctxPct && labelsAnios.length > 0) {
+    new Chart(ctxPct, {
+      type: 'line',
+      data: {
+        labels: labelsAnios,
+        datasets: [
+          {
+            label: '% verificadas',
+            data: dataPctVerificadasPorAnio,
+            borderColor: 'rgba(80, 149, 255, 0.9)',
+            backgroundColor: 'rgba(80, 149, 255, 0.15)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.2,
+            pointRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function (value) {
+                return value + '%';
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+</script>
+{% endif %}
+
+</body>
+</html>

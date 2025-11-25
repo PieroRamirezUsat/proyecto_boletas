@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel de Administración - UGEL Lambayeque</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+    }
+  </style>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#127ae2",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+            "text-light": "#0d141b",
+            "text-dark": "#f6f7f8",
+            "subtext-light": "#4c739a",
+            "subtext-dark": "#94a3b8",
+            "card-light": "#ffffff",
+            "card-dark": "#1e293b",
+            "border-light": "#e2e8f0",
+            "border-dark": "#334155",
+          },
+          fontFamily: {
+            "display": ["Public Sans", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="font-display bg-background-light text-text-light">
+
+<div class="relative flex min-h-screen">
+  <!-- Sidebar -->
+  <aside class="sticky top-0 h-screen flex-shrink-0 bg-card-light border-r border-border-light hidden lg:flex lg:flex-col lg:w-64">
+    <div class="flex h-full flex-col justify-between p-4">
+      <div class="flex flex-col gap-4">
+        <div class="flex gap-3 items-center p-2">
+          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
+               style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD1dbzCwEG9HA2JHKvQfT-T6Mr7L4j9_dnVj-lZfT0Vp1k_fblBCr3ijvAfuHwuZ6-MvIq1IWCriAiSG1dZhBxaFm7OKZkfEzXgoHGGGo7TCTM_wxVSjP9EOIObBpCvzXuh3ttoiAo7wKFsFBbpT6hKxxLM-7oaKKHAugA3NRm8kBRm6rHN6Nc_BahmTZk88kjm7F4IOD5Y95UDBe6YmiGi_7EpUQlu02aJIsWy1IATbqQTuPQDm0GiKYEWDfi_XraTIyPTbygAzAMv");'>
+          </div>
+          <div class="flex flex-col">
+            <h1 class="text-base font-medium text-text-light">UGEL Lambayeque</h1>
+            <p class="text-sm text-subtext-light">Sistema de Digitalización</p>
+          </div>
+        </div>
+
+        <nav class="flex flex-col gap-2 mt-4">
+          <!-- Dashboard (actual) -->
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary"
+             href="{{ url_for('admin_panel') }}">
+            <span class="material-symbols-outlined text-primary">dashboard</span>
+            <p class="text-sm font-bold">Dashboard</p>
+          </a>
+
+          <!-- Boletas -->
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+             href="{{ url_for('admin_boletas') }}">
+            <span class="material-symbols-outlined">receipt_long</span>
+            <p class="text-sm font-medium">Boletas</p>
+          </a>
+
+          <!-- Usuarios -->
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+             href="{{ url_for('admin_usuarios') }}">
+            <span class="material-symbols-outlined">group</span>
+            <p class="text-sm font-medium">Usuarios</p>
+          </a>
+        </nav>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+           href="{{ url_for('logout') }}">
+          <span class="material-symbols-outlined">logout</span>
+          <p class="text-sm font-medium">Cerrar Sesión</p>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div class="w-full max-w-7xl mx-auto">
+
+      <!-- Header -->
+      <header class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div class="flex flex-col gap-1">
+          <h1 class="text-3xl font-black leading-tight tracking-[-0.03em]">Panel de administración</h1>
+          <p class="text-base text-subtext-light">
+            Resumen general del sistema de digitalización de boletas.
+          </p>
+        </div>
+      </header>
+
+      <!-- Cards -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <!-- Boletas digitalizadas -->
+        <div class="flex flex-col gap-2 rounded-xl p-6 bg-card-light border border-border-light shadow-sm">
+          <p class="text-base font-medium">Boletas digitalizadas</p>
+          <p class="tracking-light text-3xl font-bold leading-tight">{{ total_boletas }}</p>
+          <p class="text-subtext-light text-sm">
+            {{ porc_boletas_verificadas }}% de las boletas están <span class="font-semibold">verificadas</span>.
+          </p>
+        </div>
+
+        <!-- Años cubiertos -->
+        <div class="flex flex-col gap-2 rounded-xl p-6 bg-card-light border border-border-light shadow-sm">
+          <p class="text-base font-medium">Años cubiertos</p>
+          <p class="tracking-light text-3xl font-bold leading-tight">{{ anios_cubiertos }}</p>
+          {% if anio_min and anio_max %}
+          <p class="text-subtext-light text-sm">
+            Cubren el <span class="font-semibold">{{ porc_cobertura_anios }}%</span> del periodo {{ anio_min }}–{{ anio_max }}.
+          </p>
+          {% else %}
+          <p class="text-subtext-light text-sm">
+            Aún no hay información suficiente para calcular la cobertura.
+          </p>
+          {% endif %}
+        </div>
+
+        <!-- Trabajadores registrados -->
+        <div class="flex flex-col gap-2 rounded-xl p-6 bg-card-light border border-border-light shadow-sm">
+          <p class="text-base font-medium">Trabajadores registrados</p>
+          <p class="tracking-light text-3xl font-bold leading-tight">{{ total_trabajadores }}</p>
+          <p class="text-subtext-light text-sm">
+            El <span class="font-semibold">{{ porc_trabajadores_cubiertos }}%</span> tiene al menos una boleta digitalizada.
+          </p>
+        </div>
+
+        <!-- Pendientes por clasificar -->
+        <div class="flex flex-col gap-2 rounded-xl p-6 bg-card-light border border-border-light shadow-sm">
+          <p class="text-base font-medium">Pendientes por clasificar</p>
+          <p class="tracking-light text-3xl font-bold leading-tight">{{ pendientes_clasificar }}</p>
+          <p class="text-sm font-medium {% if pendientes_clasificar > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+            {{ porc_pendientes }}% de las boletas están aún <span class="font-semibold">pendientes</span>.
+          </p>
+        </div>
+      </section>
+
+      <!-- Gráfico evolución + proyección -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <!-- Gráfico -->
+        <div class="lg:col-span-2 bg-card-light rounded-xl border border-border-light shadow-sm p-4 sm:p-6">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="text-base font-semibold">Evolución de boletas digitalizadas por año</h2>
+            <p class="text-[11px] text-subtext-light">
+              Distribución histórica de boletas registradas en el sistema.
+            </p>
+          </div>
+          <div class="h-72">
+            <canvas id="chartBoletasPorAnio"></canvas>
+          </div>
+        </div>
+
+        <!-- Proyección a futuro -->
+        <div class="bg-card-light rounded-xl border border-border-light shadow-sm p-4 sm:p-6">
+          <h2 class="text-base font-semibold mb-2">Proyección a futuro</h2>
+          <p class="text-sm text-subtext-light mb-2">
+            Hasta el momento se han digitalizado <strong>{{ total_boletas }}</strong> boletas
+            distribuidas en <strong>{{ anios_cubiertos }}</strong> año(s).
+          </p>
+          <p class="text-sm text-subtext-light mb-2">
+            En promedio, el sistema viene registrando
+            <strong>{{ ritmo_promedio_anual }}</strong> boletas digitalizadas por año.
+          </p>
+          <p class="text-sm text-subtext-light mb-2">
+            Si se mantiene este mismo ritmo durante los próximos <strong>3 años</strong>,
+            se espera alcanzar alrededor de
+            <strong>{{ proyeccion_total_boletas_3_anios }}</strong> boletas digitalizadas en total.
+          </p>
+          <p class="text-[11px] text-subtext-light mt-3">
+            Esta proyección ayuda a planificar recursos (personal, escáneres, presupuesto)
+            para el área de archivo, asumiendo que el comportamiento de digitalización
+            se mantiene estable en el tiempo.
+          </p>
+        </div>
+      </section>
+
+      <!-- Gráfico % verificadas -->
+      <section class="bg-card-light rounded-xl border border-border-light shadow-sm p-4 sm:p-6 mb-8">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-base font-semibold">% de boletas verificadas por año</h2>
+          <p class="text-[11px] text-subtext-light max-w-md text-right">
+            Permite identificar años donde quedó trabajo sin revisar y priorizar la supervisión
+            del equipo responsable.
+          </p>
+        </div>
+        <div class="h-72">
+          <canvas id="chartPorcentajeVerificadas"></canvas>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Scripts de gráficos -->
+<script>
+  // Datos que vienen desde Flask (convertidos a JSON y metidos como string)
+  const labelsAnios = JSON.parse('{{ labels_por_anio | tojson | safe }}');
+  const dataTotalPorAnio = JSON.parse('{{ data_total_por_anio | tojson | safe }}');
+  const dataVerificadasPorAnio = JSON.parse('{{ data_verificadas_por_anio | tojson | safe }}');
+  const dataPctVerificadasPorAnio = JSON.parse('{{ data_pct_verificadas_por_anio | tojson | safe }}');
+
+  // Gráfico 1: total vs verificadas por año
+  const ctxBoletas = document.getElementById('chartBoletasPorAnio');
+  if (ctxBoletas && labelsAnios.length > 0) {
+    new Chart(ctxBoletas, {
+      type: 'bar',
+      data: {
+        labels: labelsAnios,
+        datasets: [
+          {
+            label: 'Boletas digitalizadas',
+            data: dataTotalPorAnio,
+            backgroundColor: 'rgba(80, 140, 255, 0.6)',
+          },
+          {
+            label: 'Boletas verificadas',
+            data: dataVerificadasPorAnio,
+            backgroundColor: 'rgba(255, 140, 180, 0.6)',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Gráfico 2: porcentaje de verificadas por año
+  const ctxPct = document.getElementById('chartPorcentajeVerificadas');
+  if (ctxPct && labelsAnios.length > 0) {
+    new Chart(ctxPct, {
+      type: 'line',
+      data: {
+        labels: labelsAnios,
+        datasets: [
+          {
+            label: '% verificadas',
+            data: dataPctVerificadasPorAnio,
+            borderColor: 'rgba(80, 140, 255, 1)',
+            backgroundColor: 'rgba(80, 140, 255, 0.15)',
+            tension: 0.2,
+            fill: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            min: 0,
+            max: 100,
+            ticks: {
+              callback: (value) => value + '%'
+            }
+          }
+        }
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

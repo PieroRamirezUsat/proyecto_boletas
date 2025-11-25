@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Subir boletas escaneadas - UGEL Lambayeque</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+    }
+  </style>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#127ae2",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+            "text-light": "#0d141b",
+            "text-dark": "#f6f7f8",
+            "subtext-light": "#4c739a",
+            "subtext-dark": "#94a3b8",
+            "card-light": "#ffffff",
+            "card-dark": "#1e293b",
+            "border-light": "#e2e8f0",
+            "border-dark": "#334155",
+          },
+          fontFamily: {
+            "display": ["Public Sans", "sans-serif"]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="font-display bg-background-light text-text-light">
+
+{% set meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto',
+                'Septiembre','Octubre','Noviembre','Diciembre'] %}
+
+<div class="relative flex min-h-screen">
+  <!-- Sidebar -->
+  <aside class="sticky top-0 h-screen flex-shrink-0 bg-card-light border-r border-border-light hidden lg:flex lg:flex-col lg:w-64">
+    <div class="flex h-full flex-col justify-between p-4">
+      <div class="flex flex-col gap-4">
+        <div class="flex gap-3 items-center p-2">
+          <div class="bg-center bg-cover rounded-full size-10"
+               style='background-image:url("https://lh3.googleusercontent.com/aida-public/AB6AXuBI_XvzNwxLD8gGshvs-MLjp2q0YNf5hj2Zx11SD7m7oewkd6Eyr8dOxvdVkmAApE4tYw_OhzwBwXdjA83jGHJ5DBg3n4tzwyPNc23puxxmES9IXCP0FQ-ZH01JszzNOYHa43oCm7hX7qzlgwEZD4KjiS-KuSIxDO3j9aGf0sd7KeNJ5OEVwbMtMkgeR0VL35ErBz7nOPoW91WkUhkiurtzxJBPiY82kTCYXzks4a8qSsdGo7whIgnTQV8Ny0avgF0nEmiycmF4iy_z");'>
+          </div>
+          <div>
+            <h1 class="text-base font-medium">UGEL Lambayeque</h1>
+            <p class="text-sm text-subtext-light">Sistema de Digitalización</p>
+          </div>
+        </div>
+
+        <nav class="flex flex-col gap-2 mt-4">
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+             href="{{ url_for('digitador_panel') }}">
+            <span class="material-symbols-outlined">dashboard</span>
+            <p class="text-sm font-medium">Dashboard</p>
+          </a>
+
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary"
+             href="{{ url_for('subir_boletas') }}">
+            <span class="material-symbols-outlined text-primary">upload_file</span>
+            <p class="text-sm font-bold">Subir boletas</p>
+          </a>
+        </nav>
+      </div>
+
+      <div>
+        <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+           href="{{ url_for('logout') }}">
+          <span class="material-symbols-outlined">logout</span>
+          <p class="text-sm font-medium">Cerrar Sesión</p>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div class="max-w-5xl mx-auto">
+
+      <!-- Encabezado -->
+      <header class="mb-6">
+        <h1 class="text-3xl font-black">Subir boletas escaneadas</h1>
+        <p class="mt-1 text-base text-subtext-light">
+          Puedes subir boletas individuales o varias a la vez con el formato
+          <strong>DNI_AÑO_MES.pdf</strong>.
+        </p>
+      </header>
+
+      <!-- Mensajes flash -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-4 space-y-2">
+            {% for category, message in messages %}
+              <div class="px-4 py-2 rounded-lg border text-sm
+                {% if category == 'success' %} bg-emerald-50 text-emerald-700 border-emerald-200
+                {% elif category == 'danger' %} bg-red-50 text-red-700 border-red-200
+                {% else %} bg-slate-50 text-slate-700 border-slate-200 {% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Formulario -->
+      <form method="post" enctype="multipart/form-data" class="space-y-6">
+
+        <!-- Paso 1: archivo -->
+        <section class="bg-white rounded-xl border border-border-light p-6 shadow-sm">
+          <p class="text-sm font-semibold text-subtext-light mb-2">Paso 1: Seleccionar archivo(s)</p>
+
+          <div class="border-2 border-dashed rounded-xl bg-slate-50 px-6 py-10 text-center">
+            <span class="material-symbols-outlined text-4xl text-slate-400">cloud_upload</span>
+            <p class="text-sm font-medium mt-3">Selecciona uno o varios archivos PDF</p>
+
+            <label class="mt-3 inline-flex cursor-pointer bg-primary text-white px-4 py-2 rounded-full text-sm font-semibold">
+              Seleccionar archivo(s)
+              <input type="file" multiple name="archivo"
+                     class="hidden" accept=".pdf,.zip"
+                     onchange="mostrarNombreArchivo(this)" />
+            </label>
+
+            <p id="archivoSeleccionado" class="mt-3 text-xs text-subtext-light">
+              {% if nombre_archivo %}
+                Archivo seleccionado: {{ nombre_archivo }}
+              {% else %}
+                Ningún archivo seleccionado todavía.
+              {% endif %}
+            </p>
+
+            <p class="mt-2 text-[11px] text-subtext-light">
+              Si subes varios archivos, el sistema leerá automáticamente DNI, año y mes del nombre.
+            </p>
+          </div>
+        </section>
+
+        <!-- Paso 2: datos manuales -->
+        <section class="bg-white rounded-xl border border-border-light p-6 shadow-sm">
+          <p class="text-sm font-semibold text-subtext-light mb-2">
+            Paso 2: Datos manuales (solo si subes 1 archivo)
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <!-- Año -->
+            <div>
+              <label class="text-sm font-medium">Año</label>
+              <input id="anio" name="anio" type="number" min="1980" max="2099"
+                     class="mt-1 block w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm shadow-sm"
+                     placeholder="1998"
+                     value="{{ anio_form or '' }}"/>
+            </div>
+
+            <!-- Mes -->
+            <div>
+              <label class="text-sm font-medium">Mes</label>
+              <select id="mes" name="mes"
+                      class="mt-1 block w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm shadow-sm">
+                <option value="">Seleccione…</option>
+                {% for i in range(1,13) %}
+                  <option value="{{ i }}"
+                          {% if mes_form and mes_form|int == i %}selected{% endif %}>
+                    {{ meses[i-1] }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- DNI digitador -->
+            <div class="md:col-span-2">
+              <label class="text-sm font-medium">Tu DNI (digitador)</label>
+              <input type="text" readonly value="{{ digitador_dni }}"
+                     class="mt-1 block w-full rounded-lg border border-border-light bg-slate-100 px-3 py-2 text-sm shadow-sm" />
+            </div>
+
+            <!-- DNI titular -->
+            <div class="md:col-span-2">
+              <label class="text-sm font-medium">DNI del titular de la boleta</label>
+              <input id="dni_titular" name="dni_titular" type="text"
+                     class="mt-1 block w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm shadow-sm"
+                     placeholder="DNI del trabajador"
+                     value="{{ dni_titular_form or '' }}"/>
+            </div>
+
+            <!-- Nombres titular -->
+            <div class="md:col-span-2">
+              <label class="text-sm font-medium">Nombres del titular</label>
+              <input id="nombres_titular" name="nombres_titular" type="text"
+                     class="mt-1 block w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm shadow-sm"
+                     placeholder="Nombres del trabajador"
+                     value="{{ nombres_titular_form or '' }}"/>
+            </div>
+
+            <!-- Apellidos titular -->
+            <div class="md:col-span-2">
+              <label class="text-sm font-medium">Apellidos del titular</label>
+              <input id="apellidos_titular" name="apellidos_titular" type="text"
+                     class="mt-1 block w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm shadow-sm"
+                     placeholder="Apellidos del trabajador"
+                     value="{{ apellidos_titular_form or '' }}"/>
+            </div>
+
+            <!-- Régimen / Cargo -->
+            <div class="md:col-span-2">
+              <label class="text-sm font-medium">Régimen / Cargo</label>
+              <input id="regimen_cargo" name="regimen_cargo" type="text"
+                     class="mt-1 block w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm shadow-sm"
+                     placeholder="Ej: DOCENTE, ADMINISTRATIVO"
+                     value="{{ regimen_cargo_form or '' }}"/>
+            </div>
+
+          </div>
+
+          <!-- Referencia física -->
+          <div class="border-t border-border-light mt-6 pt-4">
+            <p class="text-xs font-semibold text-subtext-light uppercase">Referencia física</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+              <input type="text" name="caja_fisica" placeholder="Caja"
+                     class="border border-border-light bg-background-light px-3 py-2 rounded-lg text-sm shadow-sm"
+                     value="{{ caja_form or '' }}"/>
+              <input type="text" name="legajo_fisico" placeholder="Legajo"
+                     class="border border-border-light bg-background-light px-3 py-2 rounded-lg text-sm shadow-sm"
+                     value="{{ legajo_form or '' }}"/>
+              <input type="text" name="carpeta_fisica" placeholder="Carpeta"
+                     class="border border-border-light bg-background-light px-3 py-2 rounded-lg text-sm shadow-sm"
+                     value="{{ carpeta_form or '' }}"/>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- Paso 3 -->
+        <section class="bg-white rounded-xl border border-border-light p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p class="text-sm text-subtext-light">
+            Verifica los datos antes de registrar la digitalización.
+          </p>
+          <button type="submit"
+                  class="bg-primary text-white px-5 py-2.5 rounded-full text-sm font-semibold">
+            Guardar boleta(s)
+          </button>
+        </section>
+
+      </form>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  function mostrarNombreArchivo(input) {
+    const label = document.getElementById('archivoSeleccionado');
+    if (!label) return;
+
+    if (input.files && input.files.length > 0) {
+      if (input.files.length === 1) {
+        label.textContent = 'Archivo seleccionado: ' + input.files[0].name;
+      } else {
+        label.textContent = input.files.length + ' archivos seleccionados.';
+      }
+    } else {
+      label.textContent = 'Ningún archivo seleccionado todavía.';
+    }
+  }
+</script>
+
+</body>
+</html>

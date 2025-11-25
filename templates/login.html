@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ingreso - Sistema de Digitalización</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+    }
+  </style>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#127ae2",
+            "background-light": "#f6f7f8",
+            "text-light": "#0d141b",
+            "subtext-light": "#4c739a",
+            "card-light": "#ffffff",
+            "border-light": "#e2e8f0",
+          },
+          fontFamily: {
+            "display": ["Public Sans", "sans-serif"],
+          },
+          borderRadius: {
+            "xl": "0.75rem",
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-display bg-background-light text-text-light">
+
+<div class="min-h-screen flex items-center justify-center px-4">
+  <div class="w-full max-w-xl flex flex-col items-stretch gap-4">
+
+    <!-- TARJETA DE LOGIN -->
+    <div class="bg-card-light border border-border-light rounded-xl shadow-sm p-8">
+      <div class="flex flex-col items-center gap-4 mb-6">
+
+        <!-- LOGO -->
+        <div class="flex justify-center mb-2">
+          <img src="{{ url_for('static', filename='img/logo-minedu.png') }}"
+               alt="Logo UGEL Lambayeque"
+               class="h-16 w-auto">
+        </div>
+
+        <!-- TÍTULO -->
+        <div class="text-center space-y-1">
+          <h1 class="text-xl sm:text-2xl font-black leading-snug">
+            Sistema de Digitalización Histórica de<br/>
+            Boletas de Pago
+          </h1>
+          <p class="text-sm text-subtext-light">
+            Accede a tus boletas históricas digitalizadas (anteriores al 2020).
+          </p>
+        </div>
+      </div>
+
+      {% if mensaje_error %}
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ mensaje_error }}
+        </div>
+      {% endif %}
+
+      <form action="{{ url_for('login') }}" method="post" class="space-y-4">
+        <div>
+          <label for="dni" class="block text-sm font-medium mb-1">DNI</label>
+          <input id="dni" name="dni" type="text" maxlength="8" required
+                 class="block w-full rounded-lg border-border-light focus:border-primary focus:ring-primary text-sm"
+                 placeholder="Ingresa tu DNI">
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium mb-1">Contraseña</label>
+          <div class="relative">
+            <input id="password" name="password" type="password" required
+                   class="block w-full rounded-lg border-border-light focus:border-primary focus:ring-primary text-sm pr-10"
+                   placeholder="Ingresa tu contraseña">
+
+            <button type="button"
+                    id="togglePassword"
+                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-700">
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">
+                visibility
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit"
+                class="w-full mt-2 inline-flex justify-center items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-600">
+          Ingresar
+        </button>
+      </form>
+
+      <!-- Link de registro -->
+      <p class="mt-4 text-center text-sm text-subtext-light">
+        ¿No tienes cuenta?
+        <a href="{{ url_for('registro_usuario') }}" class="text-primary font-semibold hover:underline">
+          Regístrate aquí
+        </a>
+      </p>
+    </div>
+
+    <!-- CUADRO DE INFORMACIÓN -->
+    <div class="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex gap-3">
+      <span class="material-symbols-outlined text-blue-500 mt-0.5">info</span>
+      <p class="text-sm text-blue-900">
+        Este sistema permite consultar boletas de pago antiguas que no aparecen en AYNI/Mi Boleta.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Mostrar / ocultar contraseña
+  const passwordInput = document.getElementById('password');
+  const togglePasswordBtn = document.getElementById('togglePassword');
+  const iconSpan = togglePasswordBtn.querySelector('span');
+
+  togglePasswordBtn.addEventListener('click', () => {
+    const isPassword = passwordInput.type === 'password';
+    passwordInput.type = isPassword ? 'text' : 'password';
+    iconSpan.textContent = isPassword ? 'visibility_off' : 'visibility';
+  });
+</script>
+
+</body>
+</html>

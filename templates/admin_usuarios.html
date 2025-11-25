@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestión de Usuarios - UGEL Lambayeque</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+    }
+  </style>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#127ae2",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+            "text-light": "#0d141b",
+            "text-dark": "#f6f7f8",
+            "subtext-light": "#4c739a",
+            "subtext-dark": "#94a3b8",
+            "card-light": "#ffffff",
+            "card-dark": "#1e293b",
+            "border-light": "#e2e8f0",
+            "border-dark": "#334155",
+          },
+          fontFamily: {
+            "display": ["Public Sans", "sans-serif"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+        },
+      },
+    }
+  </script>
+</head>
+<body class="font-display bg-background-light text-text-light">
+
+<div class="relative flex min-h-screen">
+  <!-- Sidebar -->
+  <aside class="sticky top-0 h-screen flex-shrink-0 bg-card-light border-r border-border-light hidden lg:flex lg:flex-col lg:w-64">
+    <div class="flex h-full flex-col justify-between p-4">
+      <div class="flex flex-col gap-4">
+        <div class="flex gap-3 items-center p-2">
+          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
+               style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD1dbzCwEG9HA2JHKvQfT-T6Mr7L4j9_dnVj-lZfT0Vp1k_fblBCr3ijvAfuHwuZ6-MvIq1IWCriAiSG1dZhBxaFm7OKZkfEzXgoHGGGo7TCTM_wxVSjP9EOIObBpCvzXuh3ttoiAo7wKFsFBbpT6hKxxLM-7oaKKHAugA3NRm8kBRm6rHN6Nc_BahmTZk88kjm7F4IOD5Y95UDBe6YmiGi_7EpUQlu02aJIsWy1IATbqQTuPQDm0GiKYEWDfi_XraTIyPTbygAzAMv");'>
+          </div>
+          <div class="flex flex-col">
+            <h1 class="text-base font-medium text-text-light">UGEL Lambayeque</h1>
+            <p class="text-sm text-subtext-light">Sistema de Digitalización</p>
+          </div>
+        </div>
+
+        <nav class="flex flex-col gap-2 mt-4">
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+             href="{{ url_for('admin_panel') }}">
+            <span class="material-symbols-outlined">dashboard</span>
+            <p class="text-sm font-medium">Dashboard</p>
+          </a>
+
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+             href="{{ url_for('admin_boletas') }}">
+            <span class="material-symbols-outlined">receipt_long</span>
+            <p class="text-sm font-medium">Boletas</p>
+          </a>
+
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary"
+             href="{{ url_for('admin_usuarios') }}">
+            <span class="material-symbols-outlined text-primary">group</span>
+            <p class="text-sm font-bold">Usuarios</p>
+          </a>
+        </nav>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+           href="{{ url_for('logout') }}">
+          <span class="material-symbols-outlined">logout</span>
+          <p class="text-sm font-medium">Cerrar Sesión</p>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div class="w-full max-w-7xl mx-auto">
+
+      <!-- Header -->
+      <header class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div class="flex flex-col gap-1">
+          <h1 class="text-3xl font-black leading-tight tracking-[-0.03em]">Gestión de Usuarios</h1>
+          <p class="text-base text-subtext-light">
+            Administra los usuarios del sistema, sus roles y permisos.
+          </p>
+        </div>
+      </header>
+
+      <!-- Controles superiores -->
+      <section class="bg-card-light rounded-xl border border-border-light shadow-sm mb-6">
+        <div class="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+          <!-- Buscador -->
+          <div class="w-full lg:max-w-xl">
+            <div class="relative">
+              <input id="buscarUsuario"
+                     class="w-full pl-10 pr-4 py-2 rounded-lg border border-border-light bg-background-light
+                            focus:ring-2 focus:ring-primary focus:border-primary"
+                     placeholder="Buscar por DNI, nombre o apellidos..."
+                     type="text"/>
+              <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-subtext-light text-base">
+                search
+              </span>
+            </div>
+            <p class="mt-1 text-xs text-subtext-light">
+              Puedes escribir solo el apellido, solo el nombre o ambos (por ejemplo: <strong>María López</strong>).
+            </p>
+          </div>
+
+          <!-- Filtro por rol + botón nuevo -->
+          <div class="flex items-center gap-3">
+            <form id="formFiltroRol" method="GET" action="{{ url_for('admin_usuarios') }}" class="flex items-center gap-2">
+              <select name="rol"
+                      class="rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                      onchange="document.getElementById('formFiltroRol').submit()">
+                <option value="" {% if not rol_filtro %}selected{% endif %}>Todos los roles</option>
+                <option value="ADMIN" {% if rol_filtro == 'ADMIN' %}selected{% endif %}>Administradores</option>
+                <option value="DIGITADOR" {% if rol_filtro == 'DIGITADOR' %}selected{% endif %}>Digitadores</option>
+                <option value="CONSULTA" {% if rol_filtro == 'CONSULTA' %}selected{% endif %}>Consulta</option>
+              </select>
+            </form>
+
+            <button id="btnNuevoUsuario"
+                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90">
+              <span class="material-symbols-outlined text-sm">add</span>
+              Nuevo usuario
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabla -->
+      <section class="bg-card-light rounded-xl border border-border-light shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="text-xs text-subtext-light uppercase bg-background-light">
+            <tr>
+              <th class="px-6 py-3">DNI</th>
+              <th class="px-6 py-3">Nombres</th>
+              <th class="px-6 py-3">Apellidos</th>
+              <th class="px-6 py-3">Correo</th>
+              <th class="px-6 py-3">Rol</th>
+              <th class="px-6 py-3">Estado</th>
+              <th class="px-6 py-3 text-right">Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="usuariosBody">
+            {% for u in usuarios %}
+              <tr class="border-b border-border-light {% if loop.index is even %}bg-background-light{% endif %}"
+                  data-dni="{{ u.dni }}"
+                  data-nombres="{{ u.nombres }}"
+                  data-apellidos="{{ u.apellidos }}">
+                <td class="px-6 py-4 font-medium">{{ u.dni }}</td>
+                <td class="px-6 py-4">{{ u.nombres }}</td>
+                <td class="px-6 py-4">{{ u.apellidos }}</td>
+                <td class="px-6 py-4">{{ u.correo or '—' }}</td>
+                <td class="px-6 py-4">{{ u.rol }}</td>
+                <td class="px-6 py-4">
+                  {% if u.estado == 'A' %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Activo
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      Inactivo
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <button
+                    class="inline-flex items-center justify-center rounded-lg border border-border-light px-3 py-1.5 text-xs font-medium text-text-light hover:bg-black/5 btn-editar"
+                    data-id="{{ u.id_usuario }}"
+                    data-dni="{{ u.dni }}"
+                    data-nombres="{{ u.nombres }}"
+                    data-apellidos="{{ u.apellidos }}"
+                    data-correo="{{ u.correo or '' }}"
+                    data-rol="{{ u.rol }}"
+                    data-estado="{{ u.estado }}">
+                    Editar
+                  </button>
+                  <form method="POST"
+                        action="{{ url_for('dar_baja_usuario', id_usuario=u.id_usuario) }}"
+                        class="inline-block ml-2"
+                        onsubmit="return confirm('¿Seguro que deseas dar de baja a este usuario?');">
+                    <button type="submit"
+                            class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100">
+                      Dar de baja
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="7" class="px-6 py-6 text-center text-sm text-subtext-light">
+                  No hay usuarios registrados para este filtro.
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-between p-4 sm:p-6 border-t border-border-light">
+          <span class="text-sm text-subtext-light">
+            Mostrando {{ usuarios|length }} usuario(s)
+          </span>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Modal crear/editar usuario -->
+<div id="modalUsuario"
+     class="fixed inset-0 z-40 hidden items-center justify-center bg-black/30">
+  <div class="relative w-full max-w-xl rounded-xl bg-card-light shadow-lg border border-border-light">
+    <div class="flex items-center justify-between border-b border-border-light px-5 py-3">
+      <h2 id="modalTitulo" class="text-lg font-semibold">Nuevo usuario</h2>
+      <button class="material-symbols-outlined text-subtext-light hover:text-text-light" id="btnCerrarModal">
+        close
+      </button>
+    </div>
+
+    <form method="POST" action="{{ url_for('guardar_usuario') }}" class="px-5 py-4 space-y-4">
+      <input type="hidden" name="id_usuario" id="campoIdUsuario"/>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-subtext-light mb-1">DNI</label>
+          <input name="dni" id="campoDni" required
+                 class="w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-subtext-light mb-1">Rol</label>
+          <select name="rol" id="campoRol" required
+                  class="w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+            <option value="ADMIN">ADMIN</option>
+            <option value="DIGITADOR">DIGITADOR</option>
+            <option value="CONSULTA">CONSULTA</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-subtext-light mb-1">Nombres</label>
+          <input name="nombres" id="campoNombres" required
+                 class="w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-subtext-light mb-1">Apellidos</label>
+          <input name="apellidos" id="campoApellidos" required
+                 class="w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"/>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-subtext-light mb-1">Correo (opcional)</label>
+        <input name="correo" id="campoCorreo"
+               class="w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"/>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-subtext-light mb-1">Estado</label>
+          <select name="estado" id="campoEstado" required
+                  class="w-full rounded-lg border border-border-light bg-background-light px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+            <option value="A">Activo</option>
+            <option value="I">Inactivo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-border-light mt-2 mb-2">
+        <button type="button"
+                class="rounded-lg border border-border-light px-4 py-2 text-sm font-medium text-subtext-light hover:bg-black/5"
+                id="btnCancelarModal">
+          Cancelar
+        </button>
+        <button type="submit"
+                class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90">
+          Guardar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // -------- Búsqueda en tabla por DNI / nombres / apellidos --------
+  const buscarUsuario = document.getElementById('buscarUsuario');
+  const usuariosBody = document.getElementById('usuariosBody');
+
+  if (buscarUsuario && usuariosBody) {
+    buscarUsuario.addEventListener('input', function () {
+      const term = this.value.toLowerCase().trim();
+      const rows = usuariosBody.querySelectorAll('tr');
+
+      rows.forEach(row => {
+        const dni = (row.dataset.dni || '').toLowerCase();
+        const nombres = (row.dataset.nombres || '').toLowerCase();
+        const apellidos = (row.dataset.apellidos || '').toLowerCase();
+        const completo = (nombres + ' ' + apellidos).trim();
+
+        const matches =
+          !term ||
+          dni.includes(term) ||
+          nombres.includes(term) ||
+          apellidos.includes(term) ||
+          completo.includes(term);
+
+        row.style.display = matches ? '' : 'none';
+      });
+    });
+  }
+
+  // -------- Modal crear/editar --------
+  const modal = document.getElementById('modalUsuario');
+  const btnNuevo = document.getElementById('btnNuevoUsuario');
+  const btnCerrar = document.getElementById('btnCerrarModal');
+  const btnCancelar = document.getElementById('btnCancelarModal');
+  const tituloModal = document.getElementById('modalTitulo');
+
+  const campoId = document.getElementById('campoIdUsuario');
+  const campoDni = document.getElementById('campoDni');
+  const campoRol = document.getElementById('campoRol');
+  const campoNombres = document.getElementById('campoNombres');
+  const campoApellidos = document.getElementById('campoApellidos');
+  const campoCorreo = document.getElementById('campoCorreo');
+  const campoEstado = document.getElementById('campoEstado');
+
+  function abrirModal() {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function cerrarModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  if (btnNuevo) {
+    btnNuevo.addEventListener('click', () => {
+      tituloModal.textContent = 'Nuevo usuario';
+      campoId.value = '';
+      campoDni.value = '';
+      campoRol.value = 'DIGITADOR';
+      campoNombres.value = '';
+      campoApellidos.value = '';
+      campoCorreo.value = '';
+      campoEstado.value = 'A';
+      abrirModal();
+    });
+  }
+
+  if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
+  if (btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
+
+  document.querySelectorAll('.btn-editar').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tituloModal.textContent = 'Editar usuario';
+      campoId.value = btn.dataset.id;
+      campoDni.value = btn.dataset.dni;
+      campoRol.value = btn.dataset.rol;
+      campoNombres.value = btn.dataset.nombres;
+      campoApellidos.value = btn.dataset.apellidos;
+      campoCorreo.value = btn.dataset.correo || '';
+      campoEstado.value = btn.dataset.estado || 'A';
+      abrirModal();
+    });
+  });
+</script>
+
+</body>
+</html>

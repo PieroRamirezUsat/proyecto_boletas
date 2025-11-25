@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestión de Boletas Históricas - UGEL Lambayeque</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+    }
+  </style>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#127ae2",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+            "text-light": "#0d141b",
+            "text-dark": "#f6f7f8",
+            "subtext-light": "#4c739a",
+            "subtext-dark": "#94a3b8",
+            "card-light": "#ffffff",
+            "card-dark": "#1e293b",
+            "border-light": "#e2e8f0",
+            "border-dark": "#334155",
+          },
+          fontFamily: {
+            "display": ["Public Sans", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="font-display bg-background-light text-text-light">
+
+{% set meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] %}
+
+<div class="relative flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="sticky top-0 h-screen flex-shrink-0 bg-card-light border-r border-border-light hidden lg:flex lg:flex-col lg:w-64">
+    <div class="flex h-full flex-col justify-between p-4">
+      <div class="flex flex-col gap-4">
+        <div class="flex gap-3 items-center p-2">
+          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
+               style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD1dbzCwEG9HA2JHKvQfT-T6Mr7L4j9_dnVj-lZfT0Vp1k_fblBCr3ijvAfuHwuZ6-MvIq1IWCriAiSG1dZhBxaFm7OKZkfEzXgoHGGGo7TCTM_wxVSjP9EOIObBpCvzXuh3ttoiAo7wKFsFBbpT6hKxxLM-7oaKKHAugA3NRm8kBRm6rHN6Nc_BahmTZk88kjm7F4IOD5Y95UDBe6YmiGi_7EpUQlu02aJIsWy1IATbqQTuPQDm0GiKYEWDfi_XraTIyPTbygAzAMv");'>
+          </div>
+          <div class="flex flex-col">
+            <h1 class="text-base font-medium text-text-light">UGEL Lambayeque</h1>
+            <p class="text-sm text-subtext-light">Sistema de Digitalización</p>
+          </div>
+        </div>
+
+        <nav class="flex flex-col gap-2 mt-4">
+          <!-- Dashboard -->
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+             href="{{ url_for('admin_panel') }}">
+            <span class="material-symbols-outlined">dashboard</span>
+            <p class="text-sm font-medium">Dashboard</p>
+          </a>
+
+          <!-- Boletas (vista actual) -->
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary"
+             href="{{ url_for('admin_boletas') }}">
+            <span class="material-symbols-outlined text-primary">receipt_long</span>
+            <p class="text-sm font-bold">Boletas</p>
+          </a>
+
+          <!-- Usuarios -->
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+             href="{{ url_for('admin_usuarios') }}">
+            <span class="material-symbols-outlined">group</span>
+            <p class="text-sm font-medium">Usuarios</p>
+          </a>
+        </nav>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5"
+           href="{{ url_for('logout') }}">
+          <span class="material-symbols-outlined">logout</span>
+          <p class="text-sm font-medium">Cerrar Sesión</p>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div class="w-full max-w-7xl mx-auto">
+
+      <!-- Header -->
+      <header class="flex flex-wrap justify-between items-start gap-4 mb-6">
+        <div class="flex flex-col gap-1">
+          <h1 class="text-3xl font-black leading-tight tracking-[-0.03em]">
+            Gestión de Boletas Históricas
+          </h1>
+          <p class="text-base text-subtext-light">
+            Administra, busca y verifica las boletas de pago digitalizadas.
+          </p>
+        </div>
+      </header>
+
+      <!-- Cards métricas -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
+        <!-- Total de boletas -->
+        <div class="bg-card-light rounded-xl border border-border-light shadow-sm p-5 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-subtext-light">Total de Boletas</p>
+            <span class="material-symbols-outlined text-subtext-light">receipt_long</span>
+          </div>
+          <p class="text-2xl font-bold">{{ total_boletas }}</p>
+          <p class="text-xs text-subtext-light">Total de registros en boletas_historicas.</p>
+        </div>
+
+        <!-- Verificadas -->
+        <div class="bg-card-light rounded-xl border border-border-light shadow-sm p-5 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-subtext-light">Boletas Verificadas</p>
+            <span class="material-symbols-outlined text-green-500">verified</span>
+          </div>
+          <p class="text-2xl font-bold">{{ boletas_verificadas }}</p>
+          <p class="text-xs text-subtext-light">Con campo <strong>verificada = TRUE</strong>.</p>
+        </div>
+
+        <!-- Pendientes -->
+        <div class="bg-card-light rounded-xl border border-border-light shadow-sm p-5 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-subtext-light">Boletas Pendientes</p>
+            <span class="material-symbols-outlined text-yellow-500">pending</span>
+          </div>
+          <p class="text-2xl font-bold">{{ boletas_pendientes }}</p>
+          <p class="text-xs text-subtext-light">Aún sin validar por el área responsable.</p>
+        </div>
+
+        <!-- Errores carga -->
+        <div class="bg-card-light rounded-xl border border-border-light shadow-sm p-5 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-subtext-light">Errores de Carga</p>
+            <span class="material-symbols-outlined text-red-500">error</span>
+          </div>
+          <p class="text-2xl font-bold">{{ errores_carga }}</p>
+          <p class="text-xs text-subtext-light">
+            Cargas con observaciones registradas en <strong>cargas_boletas</strong>.
+          </p>
+        </div>
+      </section>
+
+      <!-- Tabla con filtros -->
+      <div class="bg-card-light rounded-xl border border-border-light shadow-sm">
+
+        <!-- Filtros -->
+        <div class="p-4 sm:p-6 border-b border-border-light flex flex-wrap gap-4 items-center">
+          <form id="filtrosForm" method="get" action="{{ url_for('admin_boletas') }}"
+                class="flex flex-1 flex-wrap gap-4 items-center">
+
+            <!-- Buscador (servidor + búsqueda en vivo) -->
+            <div class="relative flex-1 min-w-[200px]">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-subtext-light">
+                search
+              </span>
+              <input id="q" name="q"
+                     class="w-full pl-10 pr-4 py-2 rounded-lg border border-border-light bg-background-light
+                            focus:ring-2 focus:ring-primary focus:border-primary"
+                     placeholder="Buscar por DNI o Nombres..."
+                     type="text"
+                     value="{{ q or '' }}"/>
+            </div>
+
+            <!-- Selects -->
+            <div class="flex flex-wrap gap-2 items-center">
+              <!-- Año -->
+              <select name="anio"
+                      class="rounded-lg border border-border-light bg-background-light focus:ring-2 focus:ring-primary focus:border-primary">
+                <option value="">Año</option>
+                {% for anio_op in range(1990, 2031) %}
+                  <option value="{{ anio_op }}" {% if filtro_anio and filtro_anio|int == anio_op %}selected{% endif %}>
+                    {{ anio_op }}
+                  </option>
+                {% endfor %}
+              </select>
+
+              <!-- Mes -->
+              <select name="mes"
+                      class="rounded-lg border border-border-light bg-background-light focus:ring-2 focus:ring-primary focus:border-primary">
+                <option value="">Mes</option>
+                {% for num in range(1,13) %}
+                  <option value="{{ num }}" {% if filtro_mes and filtro_mes|int == num %}selected{% endif %}>
+                    {{ meses[num-1] }}
+                  </option>
+                {% endfor %}
+              </select>
+
+              <!-- Estado -->
+              <select name="estado"
+                      class="rounded-lg border border-border-light bg-background-light focus:ring-2 focus:ring-primary focus:border-primary">
+                <option value="" {% if not filtro_estado %}selected{% endif %}>Estado</option>
+                <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="verificada" {% if filtro_estado == 'verificada' %}selected{% endif %}>Verificada</option>
+              </select>
+
+              <!-- Orden (se mantiene en la URL, por si se usa luego) -->
+              <input type="hidden" name="orden" value="{{ orden or 'reciente' }}"/>
+
+              <!-- Botón limpiar -->
+              <button type="button"
+                      id="btnLimpiar"
+                      class="px-3 py-2 rounded-lg border border-border-light text-xs font-medium text-subtext-light hover:bg-black/5">
+                Limpiar filtros
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tabla -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="text-xs text-subtext-light uppercase bg-background-light">
+            <tr>
+              <th class="px-6 py-3">DNI</th>
+              <th class="px-6 py-3">Nombres</th>
+              <th class="px-6 py-3">Año</th>
+              <th class="px-6 py-3">Mes</th>
+              <th class="px-6 py-3">Estado</th>
+              <th class="px-6 py-3">Fuente</th>
+              <th class="px-6 py-3 text-right">Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="boletasBody">
+            {% for boleta in boletas %}
+              <tr class="border-b border-border-light {% if loop.index is even %}bg-background-light{% endif %}"
+                  data-row="boleta">
+                <td class="px-6 py-4 font-medium">{{ boleta.dni }}</td>
+                <td class="px-6 py-4">{{ boleta.nombres }} {{ boleta.apellidos }}</td>
+                <td class="px-6 py-4">{{ boleta.anio }}</td>
+                <td class="px-6 py-4">{{ meses[boleta.mes - 1] }}</td>
+                <td class="px-6 py-4">
+                  <a href="{{ url_for('toggle_estado', id_boleta=boleta.id_boleta) }}"
+                     title="Click para cambiar entre Pendiente / Verificada"
+                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer
+                            {% if boleta.verificada %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                    {% if boleta.verificada %}Verificada{% else %}Pendiente{% endif %}
+                  </a>
+                </td>
+                <td class="px-6 py-4">
+                  {% if boleta.fuente == 'ESCANEADA' %}
+                    Escaneada
+                  {% else %}
+                    Digitalización Masiva
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <a href="{{ url_for('detalle_boleta', id_boleta=boleta.id_boleta) }}"
+                     class="p-1.5 rounded-md hover:bg-black/5 text-subtext-light"
+                     title="Ver detalle">
+                    <span class="material-symbols-outlined text-base">visibility</span>
+                  </a>
+                  <a href="{{ url_for('descargar_boleta', id_boleta=boleta.id_boleta) }}"
+                     class="p-1.5 rounded-md hover:bg-black/5 text-subtext-light"
+                     title="Descargar PDF">
+                    <span class="material-symbols-outlined text-base">download</span>
+                  </a>
+                </td>
+              </tr>
+            {% else %}
+              <tr data-empty="1">
+                <td colspan="7" class="px-6 py-6 text-center text-sm text-subtext-light">
+                  No hay boletas registradas con los filtros seleccionados.
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-between p-4 sm:p-6 border-t border-border-light">
+          <span class="text-sm text-subtext-light">
+            Mostrando {{ boletas|length }} resultado(s)
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- JS: búsqueda en vivo + selects autosubmit + limpiar -->
+<script>
+  const filtrosForm = document.getElementById('filtrosForm');
+  const searchInput = document.getElementById('q');
+  const tbody = document.getElementById('boletasBody');
+
+  // Búsqueda en vivo en las filas cargadas (no recarga la página)
+  if (searchInput && tbody) {
+    searchInput.addEventListener('input', function () {
+      const term = this.value.toLowerCase();
+      const rows = tbody.querySelectorAll('tr[data-row="boleta"]');
+
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(term) ? '' : 'none';
+      });
+    });
+  }
+
+  // Auto-submit de selects (Año / Mes / Estado)
+  if (filtrosForm) {
+    const selects = filtrosForm.querySelectorAll('select');
+    selects.forEach(sel => {
+      sel.addEventListener('change', () => {
+        filtrosForm.submit();
+      });
+    });
+  }
+
+  // Limpiar filtros
+  const btnLimpiar = document.getElementById('btnLimpiar');
+  if (btnLimpiar) {
+    btnLimpiar.addEventListener('click', () => {
+      window.location.href = "{{ url_for('admin_boletas') }}";
+    });
+  }
+</script>
+
+</body>
+</html>
