@@ -1,9 +1,11 @@
 import os
 
 class Config:
-    # Si no existe SECRET_KEY en el entorno, usa una por defecto
-    SECRET_KEY = os.getenv("SECRET_KEY", "clave_super_secreta_local")
+    # Clave para Flask (lee de variable de entorno, y si no hay usa una por defecto)
+    SECRET_KEY = os.getenv("SECRET_KEY", "clave_dev_boletas")
 
+    # Datos de la BD: primero busca variables de entorno (Render/Railway),
+    # si no existen usa los valores locales que ya tenías.
     DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_NAME = os.getenv("DB_NAME", "bd_gobierno")
     DB_USER = os.getenv("DB_USER", "postgres")
