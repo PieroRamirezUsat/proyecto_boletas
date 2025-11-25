@@ -1365,5 +1365,11 @@ def subir_boletas():
 # =========================================================
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    import os
 
+    # Railway te pasa el puerto en la variable PORT
+    port = int(os.getenv("PORT", 5000))
+    # Para producción en Railway normalmente debug = False
+    debug = os.getenv("FLASK_DEBUG", "0") == "1"
+
+    app.run(host="0.0.0.0", port=port, debug=debug)
