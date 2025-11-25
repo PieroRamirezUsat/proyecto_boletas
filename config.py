@@ -1,18 +1,19 @@
 import os
 
 class Config:
-    # Puedes dejar un valor por defecto por si corres local
+    # Clave secreta de Flask
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
+
 
 def get_db_params():
     """
-    Lee los parámetros de conexión desde las variables de entorno
-    que configuramos en Render: PGHOST, PGUSER, etc.
+    Devuelve los parámetros de conexión a PostgreSQL
+    usando las variables de entorno definidas en Render.
     """
     return {
-        "host": os.environ.get("PGHOST"),
-        "database": os.environ.get("PGDATABASE"),
-        "user": os.environ.get("PGUSER"),
-        "password": os.environ.get("PGPASSWORD"),
+        "host": os.environ["PGHOST"],
+        "database": os.environ["PGDATABASE"],
+        "user": os.environ["PGUSER"],
+        "password": os.environ["PGPASSWORD"],
         "port": os.environ.get("PGPORT", "5432"),
     }
