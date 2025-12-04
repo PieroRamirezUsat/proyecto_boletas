@@ -1095,19 +1095,19 @@ def subir_boletas():
     digitador_dni = session.get("dni")
 
     # valores por defecto para rellenar el formulario
-        # valores por defecto para rellenar el formulario
     contexto_form = {
         "anio_form": "",
         "mes_form": "",
         "dni_titular_form": "",
+        "nombres_titular_form": "",
+        "apellidos_titular_form": "",
         "caja_form": "",
         "legajo_form": "",
         "carpeta_form": "",
+        "tipo_trabajador_form": "",
         "regimen_cargo_form": "",
         "nombre_archivo": "",
     }
-
-
 
     if request.method == "POST":
         archivo = request.files.get("archivo")
@@ -1131,9 +1131,7 @@ def subir_boletas():
         if not tipo_trabajador:
             tipo_trabajador = "NO_REGISTRADO"
 
-
         # guardar lo que el usuario ya escribió
-                # guardar lo que el usuario ya escribió
         contexto_form.update({
             "anio_form": anio,
             "mes_form": mes,
@@ -1146,8 +1144,6 @@ def subir_boletas():
             "tipo_trabajador_form": tipo_trabajador or "",
             "regimen_cargo_form": regimen_cargo or "",
         })
-
-
 
         # Validaciones
         if not archivo or archivo.filename == "":
@@ -1184,8 +1180,8 @@ def subir_boletas():
                 digitador_dni=digitador_dni,
                 **contexto_form,
             )
-        
-        # NUEVO: Validar formatos de datos
+
+        # Validar formatos de datos
         if not validar_dni(dni_titular):
             flash("El DNI del titular debe tener exactamente 8 dígitos numéricos.", "danger")
             contexto_form["nombre_archivo"] = archivo.filename if archivo else ""
@@ -1250,8 +1246,6 @@ def subir_boletas():
                 **contexto_form,
             )
 
-
-
         try:
             anio_int = int(anio)
             mes_int = int(mes)
@@ -1270,14 +1264,22 @@ def subir_boletas():
         archivo.save(ruta_guardado)
         contexto_form["nombre_archivo"] = filename
 
-        # BD
+        # --- BD ---
+        import psycopg2.extras  # por si no lo tienes importado arriba
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        # trabajador titular (si existe, usamos nombres reales;
-        # si no, creamos registro nuevo y guardamos el régimen/cargo)
+        # Normalizamos nombres a MAYÚSCULAS (opcional)
+        nombres_titular_db = nombres_titular.strip().upper()
+        apellidos_titular_db = apellidos_titular.strip().upper()
+
+        # Buscar trabajador por DNI
         cur.execute(
-            "SELECT id_trabajador, tipo_trabajador FROM trabajadores WHERE dni = %s",
+            """
+            SELECT id_trabajador, nombres, apellidos, tipo_trabajador
+            FROM trabajadores
+            WHERE dni = %s
+            """,
             (dni_titular,),
         )
         trabajador = cur.fetchone()
@@ -1285,17 +1287,51 @@ def subir_boletas():
         if trabajador:
             id_trabajador = trabajador["id_trabajador"]
 
-            # Si escribieron un régimen/cargo y el que hay es vacío o NO_REGISTRADO, lo actualizamos
-            if regimen_cargo and (trabajador["tipo_trabajador"] in (None, "", "NO_REGISTRADO")):
+            # Decidimos si actualizar nombres / apellidos
+            debe_actualizar_nombre = (
+                trabajador["nombres"] is None
+                or trabajador["nombres"].strip() == ""
+                or trabajador["nombres"].strip().upper() == "SIN_NOMBRE"
+                or trabajador["nombres"].strip().upper() != nombres_titular_db
+            )
+
+            debe_actualizar_apellido = (
+                trabajador["apellidos"] is None
+                or trabajador["apellidos"].strip() == ""
+                or trabajador["apellidos"].strip().upper() == "SIN_NOMBRE"
+                or trabajador["apellidos"].strip().upper() != apellidos_titular_db
+            )
+
+            if debe_actualizar_nombre or debe_actualizar_apellido or regimen_cargo:
                 cur.execute(
                     """
                     UPDATE trabajadores
-                    SET tipo_trabajador = %s
+                    SET
+                        nombres = CASE
+                            WHEN %s IS NOT NULL THEN %s
+                            ELSE nombres
+                        END,
+                        apellidos = CASE
+                            WHEN %s IS NOT NULL THEN %s
+                            ELSE apellidos
+                        END,
+                        tipo_trabajador = CASE
+                            WHEN %s IS NOT NULL
+                                 AND (tipo_trabajador IS NULL OR tipo_trabajador = '' OR tipo_trabajador = 'NO_REGISTRADO')
+                            THEN %s
+                            ELSE tipo_trabajador
+                        END
                     WHERE id_trabajador = %s
                     """,
-                    (regimen_cargo, id_trabajador),
+                    (
+                        nombres_titular_db, nombres_titular_db,
+                        apellidos_titular_db, apellidos_titular_db,
+                        regimen_cargo, regimen_cargo,
+                        id_trabajador,
+                    ),
                 )
         else:
+            # Crear nuevo trabajador usando los nombres y apellidos del formulario
             tipo_trabajador_val = regimen_cargo or "NO_REGISTRADO"
             cur.execute(
                 """
@@ -1303,10 +1339,9 @@ def subir_boletas():
                 VALUES (%s, %s, %s, %s)
                 RETURNING id_trabajador
                 """,
-                (dni_titular, "SIN_NOMBRE", "SIN_NOMBRE", tipo_trabajador_val),
+                (dni_titular, nombres_titular_db, apellidos_titular_db, tipo_trabajador_val),
             )
             id_trabajador = cur.fetchone()["id_trabajador"]
-
 
         # Insert / upsert boleta
         cur.execute(
@@ -1367,6 +1402,7 @@ def subir_boletas():
         digitador_dni=digitador_dni,
         **contexto_form,
     )
+
 
 
 # =========================================================
